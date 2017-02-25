@@ -39,7 +39,7 @@ func (i *episodesOverviewUrlIterator) Run() <-chan string {
 		// TODO, error logging/handling
 		if i.crawlURL == nil {
 			log.Println("no crawl url specified")
-			return;
+			return
 		}
 
 		docRoot, err := i.domDocumentFromURL(i.crawlURL)

@@ -3,8 +3,8 @@ package crawler
 import (
 	"gopkg.in/xmlpath.v2"
 	"kika-downloader/http"
-	"net/url"
 	"kika-downloader/utils"
+	"net/url"
 )
 
 type abstractUrlIterator struct {

@@ -1,10 +1,10 @@
 package utils
 
 import (
-	"gopkg.in/xmlpath.v2"
-	"io"
 	"bytes"
 	"golang.org/x/net/html"
+	"gopkg.in/xmlpath.v2"
+	"io"
 )
 
 // NodeFromHtmlBody return *xmlpath.Node from HTML content

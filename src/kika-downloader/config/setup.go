@@ -50,6 +50,22 @@ func SetupApp(torSocksProxyUrl, episodesOverviewURL string) (di.Context, error) 
 		return nil, err
 	}
 
+	if err := appBuilder.Set("xpath_xml_series_title", XPathXmlSeriesTitle); err != nil {
+		return nil, err
+	}
+
+	if err := appBuilder.Set("xpath_xml_episode_title", XPathXmlEpisodeTitle); err != nil {
+		return nil, err
+	}
+
+	if err := appBuilder.Set("xpath_xml_episode_language", XPathXmlEpisodeLanguageCode); err != nil {
+		return nil, err
+	}
+
+	if err := appBuilder.Set("xpath_xml_episode_description", XPathXmlEpisodeDescription); err != nil {
+		return nil, err
+	}
+
 	// http client service
 	if err := services.AssignHttpClient(appBuilder); err != nil {
 		return nil, err

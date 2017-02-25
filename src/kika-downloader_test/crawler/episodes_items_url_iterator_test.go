@@ -1,13 +1,13 @@
 package crawler
 
 import (
-	"kika-downloader/config"
-	testConfig "kika-downloader_test/config"
-	"testing"
-	"kika-downloader/http"
-	"kika-downloader/crawler"
-	"net/url"
 	"fmt"
+	"kika-downloader/config"
+	"kika-downloader/crawler"
+	"kika-downloader/http"
+	testConfig "kika-downloader_test/config"
+	"net/url"
+	"testing"
 )
 
 func TestItemsIteration(t *testing.T) {

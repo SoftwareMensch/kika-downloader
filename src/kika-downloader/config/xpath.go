@@ -12,4 +12,16 @@ const (
 
 	// XPathVideoPageXmlDataTag to find the concrete element where xml url can be extracted, %s is placeholder for video id
 	XPathVideoPageXmlDataTag = "//a[@id='%s']/@onclick"
+
+	// XPathXmlSeriesTitle title of series
+	XPathXmlSeriesTitle = "//avDocument/topline"
+
+	// XPathXmlEpisodeTitle title of episode
+	XPathXmlEpisodeTitle = "//avDocument/headline"
+
+	// XPathXmlEpisodeLanguageCode language of episode
+	XPathXmlEpisodeLanguageCode = "//avDocument/language"
+
+	// XPathXmlEpisodeDescription episodes description
+	XPathXmlEpisodeDescription = "//avDocument/broadcast/broadcastDescription"
 )

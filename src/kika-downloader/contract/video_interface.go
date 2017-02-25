@@ -1,12 +1,16 @@
 package contract
 
-import "kika-downloader/vo"
+import (
+	"kika-downloader/vo"
+	"net/url"
+)
 
 type VideoInterface interface {
 	GetSeriesTitle() string
 	GetEpisodeTitle() string
+	GetEpisodeDescription() string
 	GetLanguageCode() string
-	GetVideoOriginURL() string
+	GetVideoOriginURL() *url.URL
 	GetVideoResolution() vo.Resolution
 	GetEpisodeNumber() int
 }

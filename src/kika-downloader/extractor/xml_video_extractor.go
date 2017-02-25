@@ -1,40 +1,59 @@
 package extractor
 
 import (
-	"kika-downloader/http"
-	"kika-downloader/contract"
-	"net/url"
-	"kika-downloader/utils"
-	"gopkg.in/xmlpath.v2"
 	"fmt"
-	"strings"
-	"regexp"
+	"gopkg.in/xmlpath.v2"
+	"kika-downloader/contract"
+	"kika-downloader/http"
+	"kika-downloader/utils"
 	"log"
+	"net/url"
+	"regexp"
+	"strings"
 )
 
-type xmlVideoExtractor struct{
+type xmlVideoExtractor struct {
 	httpClient http.ClientInterface
 
-	xPathVideoPageVideoTags string
+	xPathVideoPageVideoTags  string
 	xPathVideoPageXmlDataTag string
 
-	regExpVideoId string
+	xPathXmlSeriesTitle         string
+	xPathXmlEpisodeTitle        string
+	xPathXmlEpisodeLanguageCode string
+	xPathXmlEpisodeDescription  string
+
+	regExpVideoId    string
 	regExpXmlDataUrl string
 }
 
 // NewXmlVideoExtractor return xml meta data extractor
 func NewXmlVideoExtractor(
 	httpClient http.ClientInterface,
+
 	xPathVideoPageVideoTags string,
 	xPathVideoPageXmlDataTag string,
+
+	xPathXmlSeriesTitle string,
+	xPathXmlEpisodeTitle string,
+	xPathXmlEpisodeLanguageCode string,
+	xPathXmlEpisodeDescription string,
+
 	regExpVideoId string,
 	regExpXmlDataUrl string,
 ) contract.VideoExtractorInterface {
 	return &xmlVideoExtractor{
 		httpClient: httpClient,
-		xPathVideoPageVideoTags: xPathVideoPageVideoTags,
+
+		xPathVideoPageVideoTags:  xPathVideoPageVideoTags,
 		xPathVideoPageXmlDataTag: xPathVideoPageXmlDataTag,
-		regExpVideoId: regExpVideoId,
+
+		xPathXmlSeriesTitle:         xPathXmlSeriesTitle,
+		xPathXmlEpisodeTitle:        xPathXmlEpisodeTitle,
+		xPathXmlEpisodeLanguageCode: xPathXmlEpisodeLanguageCode,
+		xPathXmlEpisodeDescription:  xPathXmlEpisodeDescription,
+
+		regExpVideoId:    regExpVideoId,
 		regExpXmlDataUrl: regExpXmlDataUrl,
 	}
 }
@@ -56,23 +75,81 @@ func (e *xmlVideoExtractor) ExtractVideoFromURL(rawURL string) (contract.VideoIn
 		return nil, err
 	}
 
-	videoId, err := e.findVideoId(rootDoc)
+	xmlElementIdId, err := e.findIdOfXmlElement(rootDoc)
 	if err != nil {
 		return nil, err
 	}
 
-	xmlUrl, err := e.findXmlDataUrl(rootDoc, videoId)
+	xmlUrl, err := e.findXmlDataUrl(rootDoc, xmlElementIdId)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO, go ahead
-	xmlUrl = xmlUrl
+	xmlResponse, err := e.httpClient.Get(xmlUrl.String())
+	if err != nil {
+		return nil, err
+	}
+
+	xmlRoot, err := xmlpath.Parse(xmlResponse.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return e.makeVideoFromXmlRoot(xmlRoot)
+}
+
+func (e *xmlVideoExtractor) makeVideoFromXmlRoot(xml *xmlpath.Node) (contract.VideoInterface, error) {
+	seriesTitlePath, err := xmlpath.Compile(e.xPathXmlSeriesTitle)
+	if err != nil {
+		return nil, err
+	}
+
+	fullEposideTitlePath, err := xmlpath.Compile(e.xPathXmlEpisodeTitle)
+	if err != nil {
+		return nil, err
+	}
+
+	episodeLanguageCodePath, err := xmlpath.Compile(e.xPathXmlEpisodeLanguageCode)
+	if err != nil {
+		return nil, err
+	}
+
+	episodeDescriptionPath, err := xmlpath.Compile(e.xPathXmlEpisodeDescription)
+	if err != nil {
+		return nil, err
+	}
+
+	seriesTitle, ok := seriesTitlePath.String(xml)
+	if !ok {
+		return nil, fmt.Errorf("no series title found in xml document")
+	}
+	log.Printf("found series title: %s\n", seriesTitle)
+
+	fullEpisodesTitle, ok := fullEposideTitlePath.String(xml)
+	if !ok {
+		return nil, fmt.Errorf("no episodes title found in xml document")
+	}
+	log.Printf("found full episode title: %s\n", fullEpisodesTitle)
+
+	episodeLanguageCode, ok := episodeLanguageCodePath.String(xml)
+	if !ok {
+		return nil, fmt.Errorf("no language code found in xml document")
+	}
+	log.Printf("found language code: %s\n", episodeLanguageCode)
+
+	episodeDescription, ok := episodeDescriptionPath.String(xml)
+	if !ok {
+		return nil, fmt.Errorf("no episode description found in xml document")
+	}
+	log.Println("--- episode description ---")
+	log.Println(episodeDescription)
+	log.Println("--- episode description ---")
+
 
 	return nil, nil
 }
 
-func (e *xmlVideoExtractor) findVideoId(node *xmlpath.Node) (string, error) {
+func (e *xmlVideoExtractor) findIdOfXmlElement(node *xmlpath.Node) (string, error) {
 	videoId := ""
 
 	videoNodesPath, err := xmlpath.Compile(e.xPathVideoPageVideoTags)

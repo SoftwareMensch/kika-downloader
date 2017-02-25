@@ -1,11 +1,11 @@
 package extractor
 
 import (
-	"testing"
-	"kika-downloader/config"
-	testConfig "kika-downloader_test/config"
 	"fmt"
+	"kika-downloader/config"
 	"kika-downloader/contract"
+	testConfig "kika-downloader_test/config"
+	"testing"
 )
 
 func TestVideoExtraction(t *testing.T) {

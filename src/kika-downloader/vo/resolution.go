@@ -2,7 +2,7 @@ package vo
 
 // Resolution resolution
 type Resolution struct {
-	width int
+	width  int
 	height int
 }
 

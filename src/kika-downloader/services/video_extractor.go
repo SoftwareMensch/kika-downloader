@@ -4,8 +4,8 @@ import (
 	"github.com/sarulabs/di"
 	"kika-downloader/http"
 
-	"kika-downloader/extractor"
 	"kika-downloader/contract"
+	"kika-downloader/extractor"
 )
 
 // AssignExtractor service to extract video meta data
@@ -30,6 +30,26 @@ func AssignExtractor(builder *di.Builder) error {
 				return nil, err
 			}
 
+			xPathXmlSeriesTitle, err := ctx.SafeGet("xpath_xml_series_title")
+			if err != nil {
+				return nil, err
+			}
+
+			xPathXmlEpisodeTitle, err := ctx.SafeGet("xpath_xml_episode_title")
+			if err != nil {
+				return nil, err
+			}
+
+			xPathXmlEpisodeLanguageCode, err := ctx.SafeGet("xpath_xml_episode_language")
+			if err != nil {
+				return nil, err
+			}
+
+			xPathXmlEpisodeDescription, err := ctx.SafeGet("xpath_xml_episode_description")
+			if err != nil {
+				return nil, err
+			}
+
 			regExpVideoId, err := ctx.SafeGet("regexp_video_id")
 			if err != nil {
 				return nil, err
@@ -44,6 +64,10 @@ func AssignExtractor(builder *di.Builder) error {
 				httpClient,
 				xPathVideoPageVideoTags.(string),
 				xPathVideoPageXmlDataTag.(string),
+				xPathXmlSeriesTitle.(string),
+				xPathXmlEpisodeTitle.(string),
+				xPathXmlEpisodeLanguageCode.(string),
+				xPathXmlEpisodeDescription.(string),
 				regExpVideoId.(string),
 				regExpXmlDataUrl.(string),
 			)

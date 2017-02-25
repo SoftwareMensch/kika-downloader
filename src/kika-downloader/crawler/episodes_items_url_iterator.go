@@ -1,11 +1,11 @@
 package crawler
 
 import (
-	"kika-downloader/http"
+	"fmt"
 	"gopkg.in/xmlpath.v2"
+	"kika-downloader/http"
 	"log"
 	"net/url"
-	"fmt"
 )
 
 // episodesItemsUrlIterator iterator for items of a page
@@ -38,7 +38,7 @@ func (i *episodesItemsUrlIterator) Run() <-chan string {
 		// TODO, error logging/handling
 		if i.crawlURL == nil {
 			log.Println("no crawl url specified")
-			return;
+			return
 		}
 
 		docRoot, err := i.domDocumentFromURL(i.crawlURL)
