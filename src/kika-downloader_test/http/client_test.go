@@ -14,7 +14,7 @@ type ipInfoDTO struct {
 }
 
 func TestTorSocksProxy(t *testing.T) {
-	appContext, err := config.SetupApp(testConfig.TorSocksProxyURL, "")
+	appContext, err := config.InitApp(testConfig.TorSocksProxyURL, "")
 	if err != nil {
 		t.Error(err)
 	}

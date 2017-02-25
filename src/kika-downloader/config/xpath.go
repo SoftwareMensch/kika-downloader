@@ -24,4 +24,7 @@ const (
 
 	// XPathXmlEpisodeDescription episodes description
 	XPathXmlEpisodeDescription = "//avDocument/broadcast/broadcastDescription"
+
+	// XPathXmlAssets documents assets where video url can be found
+	XPathXmlAssets = "//avDocument/assets/asset"
 )

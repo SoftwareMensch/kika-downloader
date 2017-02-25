@@ -6,14 +6,14 @@ import (
 	"net/url"
 )
 
-// SetupApp basic app set up
-func SetupApp(torSocksProxyUrl, episodesOverviewURL string) (di.Context, error) {
+// InitApp basic app set up
+func InitApp(socksProxyUrl, episodesOverviewURL string) (di.Context, error) {
 	appBuilder, err := di.NewBuilder("app")
 	if err != nil {
 		return nil, err
 	}
 
-	if err := appBuilder.Set("tor_socks_proxy_url", torSocksProxyUrl); err != nil {
+	if err := appBuilder.Set("socks_proxy_url", socksProxyUrl); err != nil {
 		return nil, err
 	}
 
@@ -66,6 +66,10 @@ func SetupApp(torSocksProxyUrl, episodesOverviewURL string) (di.Context, error) 
 		return nil, err
 	}
 
+	if err := appBuilder.Set("xpath_xml_assets", XPathXmlAssets); err != nil {
+		return nil, err
+	}
+
 	// http client service
 	if err := services.AssignHttpClient(appBuilder); err != nil {
 		return nil, err
@@ -83,6 +87,11 @@ func SetupApp(torSocksProxyUrl, episodesOverviewURL string) (di.Context, error) 
 
 	// video meta data extractor service
 	if err := services.AssignExtractor(appBuilder); err != nil {
+		return nil, err
+	}
+
+	// video downloader
+	if err := services.AssignVideoDownloader(appBuilder); err != nil {
 		return nil, err
 	}
 

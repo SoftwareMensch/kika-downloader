@@ -11,7 +11,7 @@ import (
 )
 
 func TestPageIteration(t *testing.T) {
-	appContext, err := config.SetupApp(testConfig.TorSocksProxyURL, testConfig.EpisodesOverviewURL)
+	appContext, err := config.InitApp(testConfig.TorSocksProxyURL, testConfig.EpisodesOverviewURL)
 	if err != nil {
 		t.Error(err)
 	}

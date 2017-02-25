@@ -5,10 +5,12 @@ import (
 	"gopkg.in/xmlpath.v2"
 	"kika-downloader/contract"
 	"kika-downloader/http"
+	"kika-downloader/model"
 	"kika-downloader/utils"
-	"log"
+	"kika-downloader/vo"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -22,9 +24,17 @@ type xmlVideoExtractor struct {
 	xPathXmlEpisodeTitle        string
 	xPathXmlEpisodeLanguageCode string
 	xPathXmlEpisodeDescription  string
+	xPathXmlAssets              string
 
 	regExpVideoId    string
 	regExpXmlDataUrl string
+}
+
+type videoAsset struct {
+	Width    int
+	Height   int
+	FileSize int
+	VideoURL *url.URL
 }
 
 // NewXmlVideoExtractor return xml meta data extractor
@@ -38,6 +48,7 @@ func NewXmlVideoExtractor(
 	xPathXmlEpisodeTitle string,
 	xPathXmlEpisodeLanguageCode string,
 	xPathXmlEpisodeDescription string,
+	xPathXmlAssets string,
 
 	regExpVideoId string,
 	regExpXmlDataUrl string,
@@ -52,6 +63,7 @@ func NewXmlVideoExtractor(
 		xPathXmlEpisodeTitle:        xPathXmlEpisodeTitle,
 		xPathXmlEpisodeLanguageCode: xPathXmlEpisodeLanguageCode,
 		xPathXmlEpisodeDescription:  xPathXmlEpisodeDescription,
+		xPathXmlAssets:              xPathXmlAssets,
 
 		regExpVideoId:    regExpVideoId,
 		regExpXmlDataUrl: regExpXmlDataUrl,
@@ -95,16 +107,24 @@ func (e *xmlVideoExtractor) ExtractVideoFromURL(rawURL string) (contract.VideoIn
 		return nil, err
 	}
 
-	return e.makeVideoFromXmlRoot(xmlRoot)
+	// Because of the leading 'p', xmlElementIdId is not a valid UUID, so
+	// we remove it and validate it.
+	videoId := xmlElementIdId[1:]
+
+	if !utils.IsUUID4(videoId) {
+		return nil, fmt.Errorf("invalid video id (%s)", videoId)
+	}
+
+	return e.makeVideoFromXmlRoot(videoId, xmlRoot)
 }
 
-func (e *xmlVideoExtractor) makeVideoFromXmlRoot(xml *xmlpath.Node) (contract.VideoInterface, error) {
+func (e *xmlVideoExtractor) makeVideoFromXmlRoot(videoId string, xml *xmlpath.Node) (contract.VideoInterface, error) {
 	seriesTitlePath, err := xmlpath.Compile(e.xPathXmlSeriesTitle)
 	if err != nil {
 		return nil, err
 	}
 
-	fullEposideTitlePath, err := xmlpath.Compile(e.xPathXmlEpisodeTitle)
+	fullEpisodeTitlePath, err := xmlpath.Compile(e.xPathXmlEpisodeTitle)
 	if err != nil {
 		return nil, err
 	}
@@ -123,30 +143,163 @@ func (e *xmlVideoExtractor) makeVideoFromXmlRoot(xml *xmlpath.Node) (contract.Vi
 	if !ok {
 		return nil, fmt.Errorf("no series title found in xml document")
 	}
-	log.Printf("found series title: %s\n", seriesTitle)
 
-	fullEpisodesTitle, ok := fullEposideTitlePath.String(xml)
+	fullEpisodesTitle, ok := fullEpisodeTitlePath.String(xml)
 	if !ok {
 		return nil, fmt.Errorf("no episodes title found in xml document")
 	}
-	log.Printf("found full episode title: %s\n", fullEpisodesTitle)
 
 	episodeLanguageCode, ok := episodeLanguageCodePath.String(xml)
 	if !ok {
 		return nil, fmt.Errorf("no language code found in xml document")
 	}
-	log.Printf("found language code: %s\n", episodeLanguageCode)
 
 	episodeDescription, ok := episodeDescriptionPath.String(xml)
 	if !ok {
 		return nil, fmt.Errorf("no episode description found in xml document")
 	}
-	log.Println("--- episode description ---")
-	log.Println(episodeDescription)
-	log.Println("--- episode description ---")
 
+	// split full episode title into number and text
+	episodeNo, episodeTitle, err := e.splitFullEpisodeTitle(fullEpisodesTitle)
+	if err != nil {
+		return nil, err
+	}
 
-	return nil, nil
+	// extract real video
+	asset, err := e.extractVideoInformation(xml)
+	if err != nil {
+		return nil, err
+	}
+
+	// assemble video
+	video := model.NewVideo(
+		videoId,
+		seriesTitle,
+		episodeTitle,
+		episodeDescription,
+		episodeLanguageCode,
+		episodeNo,
+		vo.NewResolution(asset.Width, asset.Height),
+		asset.VideoURL,
+		asset.FileSize,
+	)
+
+	return video, nil
+}
+
+// return width, height, origin url, error
+func (e *xmlVideoExtractor) extractVideoInformation(doc *xmlpath.Node) (*videoAsset, error) {
+	assetsPath, err := xmlpath.Compile(e.xPathXmlAssets)
+	if err != nil {
+		return nil, err
+	}
+
+	assetsIter := assetsPath.Iter(doc)
+
+	lastPixels := 0
+
+	pos := 0
+	var bestAsset *videoAsset
+
+	for assetsIter.Next() {
+		pos++
+		assetNode := assetsIter.Node()
+
+		mediaTypeString, ok := xmlpath.MustCompile(fmt.Sprintf("%s[%d]/mediaType", e.xPathXmlAssets, pos)).String(assetNode)
+		if !ok || mediaTypeString != "MP4" {
+			continue
+		}
+
+		frameWidthString, ok := xmlpath.MustCompile(fmt.Sprintf("%s[%d]/frameWidth", e.xPathXmlAssets, pos)).String(assetNode)
+		if !ok {
+			continue
+		}
+
+		frameHeightString, ok := xmlpath.MustCompile(fmt.Sprintf("%s[%d]/frameHeight", e.xPathXmlAssets, pos)).String(assetNode)
+		if !ok {
+			continue
+		}
+
+		fileSizeString, ok := xmlpath.MustCompile(fmt.Sprintf("%s[%d]/fileSize", e.xPathXmlAssets, pos)).String(assetNode)
+		if !ok {
+			continue
+		}
+
+		progressiveDownloadUrlString, ok := xmlpath.MustCompile(fmt.Sprintf("%s[%d]/progressiveDownloadUrl", e.xPathXmlAssets, pos)).String(assetNode)
+		if !ok {
+			continue
+		}
+
+		originURL, err := url.Parse(progressiveDownloadUrlString)
+		if err != nil {
+			continue
+		}
+
+		frameWidthInt, err := strconv.Atoi(frameWidthString)
+		if err != nil {
+			continue
+		}
+
+		fileSizeInt, err := strconv.Atoi(fileSizeString)
+		if err != nil {
+			continue
+		}
+
+		frameHeightInt, err := strconv.Atoi(frameHeightString)
+		if err != nil {
+			continue
+		}
+
+		// we want just the best
+		currentPixels := frameWidthInt * frameHeightInt
+
+		if currentPixels > lastPixels {
+			bestAsset = &videoAsset{
+				Width:    frameWidthInt,
+				Height:   frameHeightInt,
+				FileSize: fileSizeInt,
+				VideoURL: originURL,
+			}
+
+			lastPixels = currentPixels
+		}
+	}
+
+	if bestAsset == nil {
+		return nil, fmt.Errorf("couldn't find any valid bestAsset")
+	}
+
+	return bestAsset, nil
+}
+
+func (e *xmlVideoExtractor) splitFullEpisodeTitle(fullTitle string) (int, string, error) {
+	r, err := regexp.Compile("^(\\d+). +(.*)$")
+	if err != nil {
+		return -1, "", err
+	}
+
+	episodeNo := -1
+	episodeTitle := ""
+
+	if r.MatchString(fullTitle) && r.NumSubexp() == 2 {
+		subs := r.FindAllStringSubmatch(fullTitle, -1)
+		episodeNo, err = strconv.Atoi(subs[0][1])
+		if err != nil {
+			return -1, "", err
+		}
+
+		episodeTitle = subs[0][2]
+	}
+
+	if episodeNo < 1 {
+		return -1, "", fmt.Errorf("couldn't find episode number imn xml document")
+	}
+
+	if episodeTitle == "" {
+		return -1, "", fmt.Errorf("couldn't find episode title in xml document")
+	}
+
+	return episodeNo, episodeTitle, nil
 }
 
 func (e *xmlVideoExtractor) findIdOfXmlElement(node *xmlpath.Node) (string, error) {
@@ -171,7 +324,6 @@ func (e *xmlVideoExtractor) findIdOfXmlElement(node *xmlpath.Node) (string, erro
 
 		if r.MatchString(rawId) {
 			videoId = strings.Replace(rawId, "html5-", "", 1)
-			log.Printf("found video id: %s\n", videoId)
 			break
 		}
 	}
@@ -206,7 +358,6 @@ func (e *xmlVideoExtractor) findXmlDataUrl(node *xmlpath.Node, videoId string) (
 		if r.MatchString(value) && r.NumSubexp() == 1 {
 			subs := r.FindAllStringSubmatch(value, -1)
 			xmlDataUrl = subs[0][1]
-			log.Printf("found xml data url: %s\n", xmlDataUrl)
 		}
 	}
 

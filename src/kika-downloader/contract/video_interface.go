@@ -6,6 +6,8 @@ import (
 )
 
 type VideoInterface interface {
+	EntityInterface
+
 	GetSeriesTitle() string
 	GetEpisodeTitle() string
 	GetEpisodeDescription() string
@@ -13,4 +15,5 @@ type VideoInterface interface {
 	GetVideoOriginURL() *url.URL
 	GetVideoResolution() vo.Resolution
 	GetEpisodeNumber() int
+	GetFileSize() int
 }

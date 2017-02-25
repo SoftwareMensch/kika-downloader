@@ -19,14 +19,16 @@ func NewClient(socksProxyURL *url.URL) (ClientInterface, error) {
 		socksProxyURL: socksProxyURL,
 	}
 
-	dialer, err := proxy.FromURL(client.socksProxyURL, proxy.Direct)
-	if err != nil {
-		return nil, err
+	if socksProxyURL != nil {
+		dialer, err := proxy.FromURL(client.socksProxyURL, proxy.Direct)
+		if err != nil {
+			return nil, err
+		}
+
+		transport := &http.Transport{Dial: dialer.Dial}
+
+		client.Transport = transport
 	}
-
-	transport := &http.Transport{Dial: dialer.Dial}
-
-	client.Transport = transport
 
 	return client, nil
 }

@@ -50,6 +50,11 @@ func AssignExtractor(builder *di.Builder) error {
 				return nil, err
 			}
 
+			xPathXmlAssets, err := ctx.SafeGet("xpath_xml_assets")
+			if err != nil {
+				return nil, err
+			}
+
 			regExpVideoId, err := ctx.SafeGet("regexp_video_id")
 			if err != nil {
 				return nil, err
@@ -68,6 +73,7 @@ func AssignExtractor(builder *di.Builder) error {
 				xPathXmlEpisodeTitle.(string),
 				xPathXmlEpisodeLanguageCode.(string),
 				xPathXmlEpisodeDescription.(string),
+				xPathXmlAssets.(string),
 				regExpVideoId.(string),
 				regExpXmlDataUrl.(string),
 			)

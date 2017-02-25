@@ -16,6 +16,7 @@ type video struct {
 	languageCode       string
 	originURL          *url.URL
 	episodeNumber      int
+	fileSize           int
 }
 
 // NewVideo instantiate new video
@@ -28,6 +29,7 @@ func NewVideo(
 	episodeNumber int,
 	resolution vo.Resolution,
 	originURL *url.URL,
+	fileSize int,
 
 ) contract.VideoInterface {
 	v := &video{
@@ -38,6 +40,7 @@ func NewVideo(
 		episodeNumber:      episodeNumber,
 		resolution:         resolution,
 		originURL:          originURL,
+		fileSize:           fileSize,
 	}
 
 	v.abstractEntity.id = id
@@ -78,4 +81,9 @@ func (v *video) GetVideoResolution() vo.Resolution {
 // GetEpisodeNumber get no. of episode
 func (v *video) GetEpisodeNumber() int {
 	return v.episodeNumber
+}
+
+// GetFileSize get no. of episode
+func (v *video) GetFileSize() int {
+	return v.fileSize
 }

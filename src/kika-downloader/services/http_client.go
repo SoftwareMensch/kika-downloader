@@ -12,17 +12,21 @@ func AssignHttpClient(builder *di.Builder) error {
 		Name:  "http_client",
 		Scope: di.App,
 		Build: func(ctx di.Context) (interface{}, error) {
-			torSocksProxyRawURL, err := ctx.SafeGet("tor_socks_proxy_url")
+			var socksProxyURL *url.URL
+
+			socksProxyRawURL, err := ctx.SafeGet("socks_proxy_url")
 			if err != nil {
 				return nil, err
 			}
 
-			torSocksProxyURL, err := url.Parse(torSocksProxyRawURL.(string))
-			if err != nil {
-				return nil, err
+			if socksProxyRawURL.(string) != "" {
+				socksProxyURL, err = url.Parse(socksProxyRawURL.(string))
+				if err != nil {
+					return nil, err
+				}
 			}
 
-			httpClient, err := http.NewClient(torSocksProxyURL)
+			httpClient, err := http.NewClient(socksProxyURL)
 			if err != nil {
 				return nil, err
 			}
