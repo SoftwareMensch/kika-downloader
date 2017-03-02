@@ -1,22 +1,26 @@
 package downloader
 
 import (
+	"encoding/hex"
 	"fmt"
 	"github.com/icrowley/fake"
+	"io/ioutil"
 	"kika-downloader/config"
 	"kika-downloader/contract"
 	"kika-downloader/model"
+	"kika-downloader/utils"
 	"kika-downloader/vo"
 	testConfig "kika-downloader_test/config"
 	"net/url"
+	"os"
 	"testing"
 )
 
-func TestCommonFileDownload(t *testing.T) {
+func TestVideoFileDownload(t *testing.T) {
 	rawTestUrl := testConfig.DownloadTestURL
-	testUrlTotalBytes := testConfig.DownloadTestURLTotalBytes
+	testUrlTotalBytes := int64(testConfig.DownloadTestURLTotalBytes)
 
-	appContext, err := config.InitApp(testConfig.TorSocksProxyURL, "")
+	appContext, err := config.InitApp("", "")
 	if err != nil {
 		t.Error(err)
 	}
@@ -45,6 +49,56 @@ func TestCommonFileDownload(t *testing.T) {
 		testUrlTotalBytes,
 	)
 
-	fmt.Printf("rawTestUrl: %s\ntestUrlTotalBytes: %d\nvideoDownloader: %v\ndummyVideo: %v\n",
-		rawTestUrl, testUrlTotalBytes, videoDownloader, dummyVideo)
+	outputTmpDir, err := ioutil.TempDir("", "vd-test-")
+	if err != nil {
+		t.Error(err)
+	}
+
+	progressChannel, err := videoDownloader.Download(dummyVideo, outputTmpDir)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// show progress
+	for progress := range progressChannel {
+		if err := videoDownloader.GetLastError(); err != nil {
+			t.Error(err)
+		}
+
+		fmt.Printf("progress: %s %%\n", progress.GetPercentage())
+	}
+
+	// test if file was really downloaded
+	fileInfo, err := os.Stat(videoDownloader.GetLocalFilePathAbs())
+	if err != nil {
+		t.Error(err)
+	}
+
+	// test if file has expected size
+	if fileInfo.Size() != testConfig.DownloadTestURLTotalBytes {
+		t.Errorf("downloaded file size does not match expected one")
+	}
+
+	// test if expected checksum matches
+	sha256Sum, err := utils.SHA256FromFile(videoDownloader.GetLocalFilePathAbs())
+	if err != nil {
+		t.Error(err)
+	}
+
+	sha256SumString := hex.EncodeToString(sha256Sum)
+	expectedSha256SumString := testConfig.DownloadTestUrlSha256Sum
+
+	if sha256SumString != expectedSha256SumString {
+		t.Errorf("wrong downloaded file checksum")
+	}
+
+	// cleanup downloaded file
+	if err = os.Remove(videoDownloader.GetLocalFilePathAbs()); err != nil {
+		t.Error(err)
+	}
+
+	// cleanup temp directory
+	if err = os.Remove(outputTmpDir); err != nil {
+		t.Error(err)
+	}
 }

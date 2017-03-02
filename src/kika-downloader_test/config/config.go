@@ -9,6 +9,6 @@ const (
 	ExtractorTestURL     = "http://www.kika.de/super-wings/sendungen/sendung97844.html"
 
 	DownloadTestURL           = "https://www.iso.org/files/live/sites/isoorg/files/archive/pdf/en/annual_report_2009.pdf"
-	DownloadTestURLTotalBytes = 10762150
+	DownloadTestURLTotalBytes = int64(10762150)
 	DownloadTestUrlSha256Sum  = "906b2154f6d5afee7a90d7f1a9c51d4bf6606be7852df583d582deb2709b9485"
 )

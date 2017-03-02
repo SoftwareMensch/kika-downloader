@@ -15,5 +15,5 @@ type VideoInterface interface {
 	GetVideoOriginURL() *url.URL
 	GetVideoResolution() vo.Resolution
 	GetEpisodeNumber() int
-	GetFileSize() int
+	GetFileSize() int64
 }

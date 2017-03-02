@@ -33,7 +33,7 @@ type xmlVideoExtractor struct {
 type videoAsset struct {
 	Width    int
 	Height   int
-	FileSize int
+	FileSize int64
 	VideoURL *url.URL
 }
 
@@ -257,7 +257,7 @@ func (e *xmlVideoExtractor) extractVideoInformation(doc *xmlpath.Node) (*videoAs
 			bestAsset = &videoAsset{
 				Width:    frameWidthInt,
 				Height:   frameHeightInt,
-				FileSize: fileSizeInt,
+				FileSize: int64(fileSizeInt),
 				VideoURL: originURL,
 			}
 

@@ -2,9 +2,12 @@ package contract
 
 // IoProgressInterface interface for download progress
 type IoProgressInterface interface {
-	// GetSourceBytesCount get total count of remote source file
-	GetSourceBytesCount() int
+	// GetTotalByteCount get total count of remote source file
+	GetTotalByteCount() int64
 
-	// GetDestBytesCount get count of local bytes
-	GetDestBytesCount() int
+	// GetCurrentByteCount get count of local bytes
+	GetCurrentByteCount() int64
+
+	// GetPercentage get current percentage
+	GetPercentage() string
 }
