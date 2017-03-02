@@ -36,6 +36,11 @@ func TestVideoFileDownload(t *testing.T) {
 		t.Error(err)
 	}
 
+	outputTmpDir, err := ioutil.TempDir("", "vd-test-")
+	if err != nil {
+		t.Error(err)
+	}
+
 	// create pseudo video entity
 	dummyVideo := model.NewVideo(
 		"12c70799-214a-4785-83cc-063289264fa4",
@@ -49,20 +54,42 @@ func TestVideoFileDownload(t *testing.T) {
 		testUrlTotalBytes,
 	)
 
-	outputTmpDir, err := ioutil.TempDir("", "vd-test-")
+	localFile, err := download(videoDownloader, dummyVideo, outputTmpDir)
 	if err != nil {
 		t.Error(err)
 	}
 
+	if err = videoDownloader.GetLastError(); err != nil {
+		t.Error(err)
+	}
+
+	// test if already downloaded files will skipped
+	_, err = download(videoDownloader, dummyVideo, outputTmpDir)
+	if videoDownloader.GetLastError() == nil {
+		t.Errorf("already downloaded files shoud be skipped")
+	}
+
+	// cleanup downloaded file
+	if err = os.Remove(localFile); err != nil {
+		t.Error(err)
+	}
+
+	// cleanup temp directory
+	if err = os.Remove(outputTmpDir); err != nil {
+		t.Error(err)
+	}
+}
+
+func download(videoDownloader contract.VideoDownloaderInterface, dummyVideo contract.VideoInterface, outputTmpDir string ) (string, error) {
 	progressChannel, err := videoDownloader.Download(dummyVideo, outputTmpDir)
 	if err != nil {
-		t.Error(err)
+		return "", err
 	}
 
 	// show progress
 	for progress := range progressChannel {
 		if err := videoDownloader.GetLastError(); err != nil {
-			t.Error(err)
+			return "", err
 		}
 
 		fmt.Printf("progress: %s %%\n", progress.GetPercentage())
@@ -71,34 +98,26 @@ func TestVideoFileDownload(t *testing.T) {
 	// test if file was really downloaded
 	fileInfo, err := os.Stat(videoDownloader.GetLocalFilePathAbs())
 	if err != nil {
-		t.Error(err)
+		return "", err
 	}
 
 	// test if file has expected size
 	if fileInfo.Size() != testConfig.DownloadTestURLTotalBytes {
-		t.Errorf("downloaded file size does not match expected one")
+		return "", fmt.Errorf("downloaded file size does not match expected one")
 	}
 
 	// test if expected checksum matches
 	sha256Sum, err := utils.SHA256FromFile(videoDownloader.GetLocalFilePathAbs())
 	if err != nil {
-		t.Error(err)
+		return "", err
 	}
 
 	sha256SumString := hex.EncodeToString(sha256Sum)
 	expectedSha256SumString := testConfig.DownloadTestUrlSha256Sum
 
 	if sha256SumString != expectedSha256SumString {
-		t.Errorf("wrong downloaded file checksum")
+		return "", fmt.Errorf("wrong downloaded file checksum")
 	}
 
-	// cleanup downloaded file
-	if err = os.Remove(videoDownloader.GetLocalFilePathAbs()); err != nil {
-		t.Error(err)
-	}
-
-	// cleanup temp directory
-	if err = os.Remove(outputTmpDir); err != nil {
-		t.Error(err)
-	}
+	return videoDownloader.GetLocalFilePathAbs(), nil
 }
