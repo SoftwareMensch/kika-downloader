@@ -1,11 +1,12 @@
 package main
 
 import (
-	"fmt"
-	"log"
-
 	"flag"
+	"fmt"
 	"kika-downloader/commands"
+	"kika-downloader/config"
+	"kika-downloader/contract"
+	"log"
 	"net/url"
 	"os"
 )
@@ -16,42 +17,44 @@ func main() {
 		os.Exit(1)
 	}
 
-	//	socksProxyURL := flag.String("socks-proxy-url", "", "url of socks proxy")
+	sockProxyUrl := flag.String("socks-proxy-url", "", "url of socks proxy")
 
-	fetchAllCommandFlagSet := flag.NewFlagSet("fetch-all", flag.ExitOnError)
-
-	switch os.Args[1] {
-	case "fetch-all":
-		fetchAllCommand, err := makeFetchAllCommand(os.Args[2:], fetchAllCommandFlagSet)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		_, err = commands.NewFetchAllHandler().Handle(fetchAllCommand)
-		if err != nil {
-			log.Fatal(err)
-		}
-	default:
-		fmt.Printf("%s is not a valid command\n", os.Args[1])
-	}
-
-	flag.Parse()
-}
-
-func makeFetchAllCommand(args []string, flagSet *flag.FlagSet) (*commands.FetchAll, error) {
-	if err := flagSet.Parse(args); err != nil {
+	appContext, err := config.InitApp(*sockProxyUrl)
+	if err != nil {
 		log.Fatal(err)
 	}
 
-	urlFlag := flagSet.String("url", "", "entry url")
-	if *urlFlag == "" {
-		return nil, fmt.Errorf("please supply the entry url with -url")
-	}
+	fetchAllCommandFlagSet := flag.NewFlagSet("fetch-all", flag.ExitOnError)
+	fetchAllUrl := fetchAllCommandFlagSet.String("url", "", "entry url")
 
-	parsedURL, err := url.Parse(*urlFlag)
-	if err != nil {
-		return nil, err
-	}
+	flag.Parse()
 
-	return commands.NewFetchAll(parsedURL), nil
+	switch os.Args[1] {
+	case "fetch-all":
+		if *fetchAllUrl == "" {
+			log.Fatal("please provide entry url")
+		}
+
+		entryUrl, err := url.Parse(*fetchAllUrl)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		command := commands.NewFetchAll(entryUrl)
+
+		service, err := appContext.SafeGet("command_handler.fetch_all")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fetchAllHandler := service.(contract.CommandHandlerInterface)
+
+		_, err = fetchAllHandler.Handle(command)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+	default:
+		fmt.Printf("%s is not a valid command\n", os.Args[1])
+	}
 }

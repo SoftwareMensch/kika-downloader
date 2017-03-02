@@ -3,26 +3,16 @@ package config
 import (
 	"github.com/sarulabs/di"
 	"kika-downloader/services"
-	"net/url"
 )
 
 // InitApp basic app set up
-func InitApp(socksProxyUrl, episodesOverviewURL string) (di.Context, error) {
+func InitApp(socksProxyUrl string) (di.Context, error) {
 	appBuilder, err := di.NewBuilder("app")
 	if err != nil {
 		return nil, err
 	}
 
 	if err := appBuilder.Set("socks_proxy_url", socksProxyUrl); err != nil {
-		return nil, err
-	}
-
-	parsedEpisodesOverviewURL, err := url.Parse(episodesOverviewURL)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := appBuilder.Set("episodes_overview_url", parsedEpisodesOverviewURL); err != nil {
 		return nil, err
 	}
 
@@ -92,6 +82,11 @@ func InitApp(socksProxyUrl, episodesOverviewURL string) (di.Context, error) {
 
 	// video downloader
 	if err := services.AssignVideoDownloader(appBuilder); err != nil {
+		return nil, err
+	}
+
+	// fetch all command handler
+	if err := services.AssignFetchAllCommandHandler(appBuilder); err != nil {
 		return nil, err
 	}
 

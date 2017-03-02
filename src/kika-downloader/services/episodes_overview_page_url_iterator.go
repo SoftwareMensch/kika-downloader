@@ -4,7 +4,6 @@ import (
 	"github.com/sarulabs/di"
 	"kika-downloader/crawler"
 	"kika-downloader/http"
-	"net/url"
 )
 
 // AssignEpisodesOverviewUrlIterator assign http client service
@@ -23,8 +22,6 @@ func AssignEpisodesOverviewUrlIterator(builder *di.Builder) error {
 				httpClient,
 				ctx.Get("xpath_episodes_overview_page_page_items").(string),
 			)
-
-			episodesOverviewCrawler.SetCrawlingURL(ctx.Get("episodes_overview_url").(*url.URL))
 
 			return episodesOverviewCrawler.(crawler.IteratorInterface), nil
 		},

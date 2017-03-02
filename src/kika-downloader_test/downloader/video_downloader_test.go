@@ -20,7 +20,7 @@ func TestVideoFileDownload(t *testing.T) {
 	rawTestUrl := testConfig.DownloadTestURL
 	testUrlTotalBytes := int64(testConfig.DownloadTestURLTotalBytes)
 
-	appContext, err := config.InitApp("", "")
+	appContext, err := config.InitApp("")
 	if err != nil {
 		t.Error(err)
 	}
@@ -80,7 +80,7 @@ func TestVideoFileDownload(t *testing.T) {
 	}
 }
 
-func download(videoDownloader contract.VideoDownloaderInterface, dummyVideo contract.VideoInterface, outputTmpDir string ) (string, error) {
+func download(videoDownloader contract.VideoDownloaderInterface, dummyVideo contract.VideoInterface, outputTmpDir string) (string, error) {
 	progressChannel, err := videoDownloader.Download(dummyVideo, outputTmpDir)
 	if err != nil {
 		return "", err

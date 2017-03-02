@@ -10,7 +10,7 @@ import (
 )
 
 func TestVideoExtraction(t *testing.T) {
-	appContext, err := config.InitApp(testConfig.TorSocksProxyURL, "")
+	appContext, err := config.InitApp(testConfig.TorSocksProxyURL)
 	if err != nil {
 		t.Error(err)
 	}
