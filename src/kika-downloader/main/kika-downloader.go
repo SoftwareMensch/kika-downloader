@@ -19,6 +19,8 @@ func main() {
 
 	sockProxyUrl := flag.String("socks-proxy-url", "", "url of socks proxy")
 
+	flag.Parse()
+
 	appContext, err := config.InitApp(*sockProxyUrl)
 	if err != nil {
 		log.Fatal(err)
@@ -26,8 +28,8 @@ func main() {
 
 	fetchAllCommandFlagSet := flag.NewFlagSet("fetch-all", flag.ExitOnError)
 	fetchAllUrl := fetchAllCommandFlagSet.String("url", "", "entry url")
-
-	flag.Parse()
+	fetchAllOutputDir := fetchAllCommandFlagSet.String("output-dir", "", "download directory")
+	fetchAllCommandFlagSet.Parse(os.Args[2:])
 
 	switch os.Args[1] {
 	case "fetch-all":
@@ -40,7 +42,11 @@ func main() {
 			log.Fatal(err)
 		}
 
-		command := commands.NewFetchAll(entryUrl)
+		if _, err := os.Stat(*fetchAllOutputDir); err != nil {
+			log.Fatal(err)
+		}
+
+		command := commands.NewFetchAll(entryUrl, *fetchAllOutputDir)
 
 		service, err := appContext.SafeGet("command_handler.fetch_all")
 		if err != nil {
@@ -49,8 +55,7 @@ func main() {
 
 		fetchAllHandler := service.(contract.CommandHandlerInterface)
 
-		_, err = fetchAllHandler.Handle(command)
-		if err != nil {
+		if _, err := fetchAllHandler.Handle(command); err != nil {
 			log.Fatal(err)
 		}
 

@@ -6,15 +6,21 @@ import (
 
 // FetchAll fetch all command
 type FetchAll struct {
-	entryURL *url.URL
+	overviewURL *url.URL
+	outputDir   string
 }
 
 // NewFetchAll new fetch all command
-func NewFetchAll(entryURL *url.URL) *FetchAll {
-	return &FetchAll{}
+func NewFetchAll(entryURL *url.URL, outputDir string) *FetchAll {
+	return &FetchAll{entryURL, outputDir}
 }
 
-// GetEntryURL return url of entry point
-func (c *FetchAll) GetEntryURL() *url.URL {
-	return c.entryURL
+// GetOverviewURL return url of entry point
+func (c *FetchAll) GetOverviewURL() *url.URL {
+	return c.overviewURL
+}
+
+// GetOutputDir return path of output dir
+func (c *FetchAll) GetOutputDir() string {
+	return c.outputDir
 }

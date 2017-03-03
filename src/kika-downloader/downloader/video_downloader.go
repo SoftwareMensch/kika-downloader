@@ -53,6 +53,11 @@ func (d *videoDownloader) GetLastError() error {
 	return d.lastError
 }
 
+// ResetLastError reset last error
+func (d *videoDownloader) ResetLastError() {
+	d.lastError = nil
+}
+
 // Download start downloading a file
 func (d *videoDownloader) Download(video contract.VideoInterface, outputDir string) (<-chan contract.IoProgressInterface, error) {
 	if _, err := os.Stat(outputDir); err != nil {

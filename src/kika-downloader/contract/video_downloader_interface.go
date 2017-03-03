@@ -10,4 +10,7 @@ type VideoDownloaderInterface interface {
 
 	// GetLastError get last error
 	GetLastError() error
+
+	// ResetLastError reset last error
+	ResetLastError()
 }

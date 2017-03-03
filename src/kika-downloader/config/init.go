@@ -90,5 +90,10 @@ func InitApp(socksProxyUrl string) (di.Context, error) {
 		return nil, err
 	}
 
+	// print csv command handler
+	if err := services.AssignPrintCsvCommandHandler(appBuilder); err != nil {
+		return nil, err
+	}
+
 	return appBuilder.Build(), nil
 }

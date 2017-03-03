@@ -8,9 +8,9 @@ import (
 )
 
 // AssignEpisodesOverviewItemsUrlIterator
-func AssignFetchAllCommandHandler(builder *di.Builder) error {
+func AssignPrintCsvCommandHandler(builder *di.Builder) error {
 	builder.AddDefinition(di.Definition{
-		Name:  "command_handler.fetch_all",
+		Name:  "command_handler.print_csv",
 		Scope: di.App,
 		Build: func(ctx di.Context) (interface{}, error) {
 			service, err := ctx.SafeGet("episodes_overview_url_iterator")
@@ -31,20 +31,15 @@ func AssignFetchAllCommandHandler(builder *di.Builder) error {
 			}
 			videoExtractor := service.(contract.VideoExtractorInterface)
 
-			service, err = ctx.SafeGet("video_downloader")
-			if err != nil {
-				return nil, err
-			}
-			videoDownloader := service.(contract.VideoDownloaderInterface)
-
-			return commands.NewFetchAllHandler(
+			return commands.NewPrintCsvHandler(
 				episodesPageIterator,
 				pageItemsIterator,
 				videoExtractor,
-				videoDownloader,
 			).(contract.CommandHandlerInterface), nil
 		},
 	})
 
 	return nil
 }
+
+
