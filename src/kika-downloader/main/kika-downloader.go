@@ -26,10 +26,16 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// fetch-all command
 	fetchAllCommandFlagSet := flag.NewFlagSet("fetch-all", flag.ExitOnError)
 	fetchAllUrl := fetchAllCommandFlagSet.String("url", "", "entry url")
 	fetchAllOutputDir := fetchAllCommandFlagSet.String("output-dir", "", "download directory")
 	fetchAllCommandFlagSet.Parse(os.Args[2:])
+
+	// print-csv command
+	printCsvCommandFlagSet := flag.NewFlagSet("print-csv", flag.ExitOnError)
+	printCsvEntryUrl := printCsvCommandFlagSet.String("url", "", "entry url")
+	printCsvCommandFlagSet.Parse(os.Args[2:])
 
 	switch os.Args[1] {
 	case "fetch-all":
@@ -53,9 +59,32 @@ func main() {
 			log.Fatal(err)
 		}
 
-		fetchAllHandler := service.(contract.CommandHandlerInterface)
+		handler := service.(contract.CommandHandlerInterface)
 
-		if _, err := fetchAllHandler.Handle(command); err != nil {
+		if _, err := handler.Handle(command); err != nil {
+			log.Fatal(err)
+		}
+
+	case "print-csv":
+		if *printCsvEntryUrl == "" {
+			log.Fatal("please provice entry url")
+		}
+
+		entryUrl, err := url.Parse(*printCsvEntryUrl)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		command := commands.NewPrintCsvCommand(entryUrl)
+
+		service, err := appContext.SafeGet("command_handler.print_csv")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		handler := service.(contract.CommandHandlerInterface)
+
+		if _, err := handler.Handle(command); err != nil {
 			log.Fatal(err)
 		}
 

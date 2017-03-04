@@ -8,7 +8,7 @@ type PrintCsv struct {
 }
 
 // NewPrintCsvCommand return print csv command
-func NewPrintCsvCommand(overviewURL *url.URL) * PrintCsv {
+func NewPrintCsvCommand(overviewURL *url.URL) *PrintCsv {
 	return &PrintCsv{overviewURL}
 }
 
