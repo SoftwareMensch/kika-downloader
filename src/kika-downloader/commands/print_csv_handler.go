@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"kika-downloader/contract"
 	"kika-downloader/crawler"
-	"net/url"
 	"kika-downloader/dto"
+	"net/url"
 	"strings"
 )
 
