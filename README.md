@@ -3,8 +3,12 @@ This is a simple tool to download offered videos from the official KIKA
 website. KIKA is a trademark of the german tv stations ARD and ZDF.
 
 # DISCLAIMER
-The media provided by KIKA is copyright protected. You are not allowed to share
-it without a written permission provided by KIKA.
+Video download tool for the german, child-oriented, TV channel KIKA.
+KIKA is a trademark of the german TV stations ARD and ZDF. You may not
+be allowed to share downloaded content with the public without a
+written permission from KIKA.
+
+Please use this code only for educational purposes.
 
 # EXAMPLE USAGE
 Current commands require at least an entry URL to start processing. An example URL
