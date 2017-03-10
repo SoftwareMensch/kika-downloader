@@ -6,10 +6,13 @@ import (
 	"kika-downloader/crawler"
 	"kika-downloader/dto"
 	"net/url"
+	"runtime"
 	"strings"
 )
 
 type printCsvHandler struct {
+	abstractHandler
+
 	command *PrintCsv
 
 	episodesPageIterator crawler.IteratorInterface
@@ -24,11 +27,19 @@ func NewPrintCsvHandler(
 	videoExtractor contract.VideoExtractorInterface,
 
 ) contract.CommandHandlerInterface {
-	return &printCsvHandler{
+	handler := &printCsvHandler{
 		episodesPageIterator: episodesPageIterator,
 		pageItemsIterator:    pageItemsIterator,
 		videoExtractor:       videoExtractor,
 	}
+
+	runtime.SetFinalizer(handler, func(h *printCsvHandler) {
+		if h.dtoOutputChannel != nil {
+			close(h.dtoOutputChannel)
+		}
+	})
+
+	return handler
 }
 
 // Handle handle command
@@ -39,6 +50,11 @@ func (h *printCsvHandler) Handle(command interface{}) (interface{}, error) {
 	default:
 		return nil, fmt.Errorf("cannot handle command of type \"%s\"", t)
 	}
+}
+
+// GetDtoOutputChannel get output channel
+func (h *printCsvHandler) GetDtoOutputChannel() chan interface{} {
+	return nil
 }
 
 func (h *printCsvHandler) handle(command *PrintCsv) (interface{}, error) {

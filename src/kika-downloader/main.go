@@ -6,6 +6,7 @@ import (
 	"kika-downloader/commands"
 	"kika-downloader/config"
 	"kika-downloader/contract"
+	"kika-downloader/dto"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -89,6 +90,24 @@ func runFetchAllCommand(flagSet *flag.FlagSet, args []string) error {
 	}
 
 	handler := service.(contract.CommandHandlerInterface)
+
+	go func() {
+		for progressDtoInterface := range handler.GetDtoOutputChannel() {
+			switch progressDtoInterface.(type) {
+			case dto.EpisodeDownloadProgress:
+				progressDto := progressDtoInterface.(dto.EpisodeDownloadProgress)
+				fmt.Printf("\r%s%% of \"%s - %s\" done",
+					progressDto.GetPercentage(),
+					progressDto.GetSeriesTitle(),
+					progressDto.GetEpisodeTitle(),
+				)
+
+				break
+			default:
+				fmt.Print("\n")
+			}
+		}
+	}()
 
 	if _, err := handler.Handle(command); err != nil {
 		return err

@@ -4,18 +4,15 @@ import (
 	"fmt"
 	"kika-downloader/contract"
 	"kika-downloader/crawler"
+	"kika-downloader/dto"
 	"log"
 	"net/url"
+	"runtime"
 )
 
-// ProgressDTO DTO to export progress
-type ProgressDTO struct {
-	Percentage   string
-	SeriesTitle  string
-	EpisodeTitle string
-}
-
 type fetchAllHandler struct {
+	abstractHandler
+
 	command *FetchAll
 
 	episodesPageIterator crawler.IteratorInterface
@@ -32,12 +29,22 @@ func NewFetchAllHandler(
 	videoDownloader contract.VideoDownloaderInterface,
 
 ) contract.CommandHandlerInterface {
-	return &fetchAllHandler{
+	handler := &fetchAllHandler{
 		episodesPageIterator: episodesPageIterator,
 		pageItemsIterator:    pageItemsIterator,
 		videoExtractor:       videoExtractor,
 		videoDownloader:      videoDownloader,
 	}
+
+	handler.dtoOutputChannel = make(chan interface{})
+
+	runtime.SetFinalizer(handler, func(h *fetchAllHandler) {
+		if h.dtoOutputChannel != nil {
+			close(h.dtoOutputChannel)
+		}
+	})
+
+	return handler
 }
 
 // Handle handle command
@@ -48,6 +55,11 @@ func (h *fetchAllHandler) Handle(command interface{}) (interface{}, error) {
 	default:
 		return nil, fmt.Errorf("cannot handle command of type \"%s\"", t)
 	}
+}
+
+// GetDtoOutputChannel get output channel
+func (h *fetchAllHandler) GetDtoOutputChannel() chan interface{} {
+	return h.dtoOutputChannel
 }
 
 func (h *fetchAllHandler) handle(command *FetchAll) (interface{}, error) {
@@ -99,19 +111,30 @@ func (h *fetchAllHandler) downloadVideo(video contract.VideoInterface, outputDir
 		return err
 	}
 
+	hasProgress := false
+
 	// progress handling
 	for p := range progressChannel {
 		if err := h.videoDownloader.GetLastError(); err != nil {
 			return err
 		}
 
-		//h.progress <- ProgressDTO{
-		//	p.GetPercentage(),
-		//	video.GetSeriesTitle(),
-		//	video.GetEpisodeTitle(),
-		//}
+		progressDto := dto.NewEpisodeDownloadProgress(
+			p.GetPercentage(),
+			video.GetSeriesTitle(),
+			video.GetEpisodeTitle(),
+		)
 
-		fmt.Printf("\r[%s %%] %s - %s\n", p.GetPercentage(), video.GetSeriesTitle(), video.GetEpisodeTitle())
+		if !hasProgress {
+			hasProgress = true
+		}
+
+		h.dtoOutputChannel <- progressDto
+	}
+
+	// Just for notify that current one is done
+	if hasProgress {
+		h.dtoOutputChannel <- true
 	}
 
 	return nil
