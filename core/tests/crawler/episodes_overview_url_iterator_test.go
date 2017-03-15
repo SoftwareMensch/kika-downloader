@@ -3,7 +3,6 @@ package crawler
 import (
 	"fmt"
 	"net/url"
-	"rkl.io/kika-downloader/config"
 	"rkl.io/kika-downloader/core/crawler"
 	"rkl.io/kika-downloader/core/http"
 	testConfig "rkl.io/kika-downloader/core/tests/config"
@@ -11,7 +10,7 @@ import (
 )
 
 func TestPageIteration(t *testing.T) {
-	appContext, err := config.InitApp(testConfig.TorSocksProxyURL)
+	appContext, err := testConfig.InitTestContext(testConfig.TorSocksProxyURL)
 	if err != nil {
 		t.Error(err)
 	}

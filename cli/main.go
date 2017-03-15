@@ -9,7 +9,7 @@ import (
 	"rkl.io/kika-downloader/cli/commands"
 	cliContract "rkl.io/kika-downloader/cli/contract"
 	"rkl.io/kika-downloader/cli/dto"
-	"rkl.io/kika-downloader/config"
+	"rkl.io/kika-downloader/cli/config"
 )
 
 func main() {
@@ -64,7 +64,7 @@ func runFetchAllCommand(flagSet *flag.FlagSet, args []string) error {
 
 	flagSet.Parse(args[2:])
 
-	appContext, err := config.InitApp(*sockProxyUrl)
+	appContext, err := config.InitCliContext(*sockProxyUrl)
 	if err != nil {
 		return err
 	}
@@ -122,7 +122,7 @@ func runPrintCsvCommand(flagSet *flag.FlagSet, args []string) error {
 
 	flagSet.Parse(args[2:])
 
-	appContext, err := config.InitApp(*sockProxyUrl)
+	appContext, err := config.InitCliContext(*sockProxyUrl)
 	if err != nil {
 		return err
 	}

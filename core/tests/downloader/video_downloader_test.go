@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
-	"rkl.io/kika-downloader/config"
 	"rkl.io/kika-downloader/core/contract"
 	"rkl.io/kika-downloader/core/model"
 	testConfig "rkl.io/kika-downloader/core/tests/config"
@@ -20,7 +19,7 @@ func TestVideoFileDownload(t *testing.T) {
 	rawTestUrl := testConfig.DownloadTestURL
 	testUrlTotalBytes := int64(testConfig.DownloadTestURLTotalBytes)
 
-	appContext, err := config.InitApp("")
+	appContext, err := testConfig.InitTestContext("")
 	if err != nil {
 		t.Error(err)
 	}
@@ -92,7 +91,7 @@ func download(videoDownloader contract.VideoDownloaderInterface, dummyVideo cont
 			return "", err
 		}
 
-		fmt.Printf("progress: %s %%\n", progress.GetPercentage())
+		fmt.Printf("\rprogress: %s %%", progress.GetPercentage())
 	}
 
 	// test if file was really downloaded

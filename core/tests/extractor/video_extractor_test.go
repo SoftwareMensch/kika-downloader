@@ -2,7 +2,6 @@ package extractor
 
 import (
 	"fmt"
-	"rkl.io/kika-downloader/config"
 	"rkl.io/kika-downloader/core/contract"
 	testConfig "rkl.io/kika-downloader/core/tests/config"
 	"rkl.io/kika-downloader/core/utils"
@@ -10,7 +9,7 @@ import (
 )
 
 func TestVideoExtraction(t *testing.T) {
-	appContext, err := config.InitApp(testConfig.TorSocksProxyURL)
+	appContext, err := testConfig.InitTestContext(testConfig.TorSocksProxyURL)
 	if err != nil {
 		t.Error(err)
 	}

@@ -2,7 +2,6 @@ package http
 
 import (
 	"io/ioutil"
-	"rkl.io/kika-downloader/config"
 	"rkl.io/kika-downloader/core/http"
 	testConfig "rkl.io/kika-downloader/core/tests/config"
 	"strings"
@@ -14,7 +13,7 @@ type ipInfoDTO struct {
 }
 
 func TestTorSocksProxy(t *testing.T) {
-	appContext, err := config.InitApp(testConfig.TorSocksProxyURL)
+	appContext, err := testConfig.InitTestContext(testConfig.TorSocksProxyURL)
 	if err != nil {
 		t.Error(err)
 	}
