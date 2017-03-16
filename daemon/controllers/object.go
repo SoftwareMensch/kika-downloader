@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"rkl.io/kika-downloader/daemon/models"
 	"encoding/json"
+	"rkl.io/kika-downloader/daemon/models"
 
 	"github.com/astaxie/beego"
 )
@@ -89,4 +89,3 @@ func (o *ObjectController) Delete() {
 	o.Data["json"] = "delete success!"
 	o.ServeJSON()
 }
-

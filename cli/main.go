@@ -7,9 +7,9 @@ import (
 	"os"
 	"path/filepath"
 	"rkl.io/kika-downloader/cli/commands"
+	"rkl.io/kika-downloader/cli/config"
 	cliContract "rkl.io/kika-downloader/cli/contract"
 	"rkl.io/kika-downloader/cli/dto"
-	"rkl.io/kika-downloader/cli/config"
 )
 
 func main() {
@@ -24,8 +24,13 @@ func main() {
 		fmt.Fprintf(os.Stderr, "\n")
 		fmt.Fprintf(os.Stderr, "Commands:\n")
 		fmt.Fprintf(os.Stderr, "\n")
-		fmt.Fprintf(os.Stderr, "  fetch-all -url=<entry url> -output-dir=<download dir>    download all videos to given directory\n")
-		fmt.Fprintf(os.Stderr, "  print-csv -url=<entry url>                               print csv like output of all videos\n")
+		fmt.Fprintf(os.Stderr, "  fetch-all : download all videos to given directory\n")
+		fmt.Fprintf(os.Stderr, "    -url=<entry url>\n")
+		fmt.Fprintf(os.Stderr, "    -output-dir=<download dir>\n")
+		fmt.Fprintf(os.Stderr, "    -max-simultaneous-downloads=[number, default 3]\n")
+		fmt.Fprintf(os.Stderr, "\n")
+		fmt.Fprintf(os.Stderr, "  print-csv : print csv like output of all videos\n")
+		fmt.Fprintf(os.Stderr, "    -url=<entry url>\n")
 		fmt.Fprintf(os.Stderr, "\n")
 	}
 
@@ -61,6 +66,7 @@ func runFetchAllCommand(flagSet *flag.FlagSet, args []string) error {
 	sockProxyUrl := flagSet.String("socks-proxy-url", "", "url of socks proxy")
 	fetchAllUrl := flagSet.String("url", "", "entry url")
 	fetchAllOutputDir := flagSet.String("output-dir", "", "download directory")
+	maxSimultaneousDownloads := flagSet.Int("max-simultaneous-downloads", 3, "maximum simultaneous downloads")
 
 	flagSet.Parse(args[2:])
 
@@ -82,7 +88,7 @@ func runFetchAllCommand(flagSet *flag.FlagSet, args []string) error {
 		return err
 	}
 
-	command := commands.NewFetchAll(entryUrl, *fetchAllOutputDir)
+	command := commands.NewFetchAll(entryUrl, *fetchAllOutputDir, *maxSimultaneousDownloads)
 
 	service, err := appContext.SafeGet("command_handler.fetch_all")
 	if err != nil {

@@ -4,17 +4,24 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"os"
 	cliContract "rkl.io/kika-downloader/cli/contract"
 	"rkl.io/kika-downloader/cli/dto"
 	coreContract "rkl.io/kika-downloader/core/contract"
 	"rkl.io/kika-downloader/core/crawler"
 	"runtime"
+	"sync"
 )
 
 type fetchAllHandler struct {
 	abstractHandler
 
 	command *FetchAll
+
+	wg sync.WaitGroup
+
+	maxSimultaneousDownloads     int
+	currentSimultaneousDownloads int
 
 	episodesPageIterator crawler.IteratorInterface
 	pageItemsIterator    crawler.IteratorInterface
@@ -37,6 +44,8 @@ func NewFetchAllHandler(
 		videoDownloader:      videoDownloader,
 	}
 
+	handler.maxSimultaneousDownloads = 1000
+	handler.currentSimultaneousDownloads = 0
 	handler.dtoOutputChannel = make(chan interface{})
 
 	runtime.SetFinalizer(handler, func(h *fetchAllHandler) {
@@ -96,12 +105,25 @@ func (h *fetchAllHandler) handle(command *FetchAll) (interface{}, error) {
 				return nil, err
 			}
 
-			// download video
-			if err := h.downloadVideo(video, command.GetOutputDir()); err != nil {
-				return nil, err
+			if h.currentSimultaneousDownloads > h.maxSimultaneousDownloads {
+				h.wg.Wait()
+				h.currentSimultaneousDownloads = 0
 			}
+
+			// download video
+			go func() {
+				h.currentSimultaneousDownloads++
+				h.wg.Add(1)
+				defer h.wg.Done()
+
+				if err := h.downloadVideo(video, command.GetOutputDir()); err != nil {
+					fmt.Fprintf(os.Stderr, "[E] %s\n", err.Error())
+				}
+			}()
 		}
 	}
+
+	h.wg.Wait()
 
 	return nil, nil
 }

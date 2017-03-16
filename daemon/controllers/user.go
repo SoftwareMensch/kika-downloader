@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"rkl.io/kika-downloader/daemon/models"
 	"encoding/json"
+	"rkl.io/kika-downloader/daemon/models"
 
 	"github.com/astaxie/beego"
 )
@@ -116,4 +116,3 @@ func (u *UserController) Logout() {
 	u.Data["json"] = "logout success"
 	u.ServeJSON()
 }
-
