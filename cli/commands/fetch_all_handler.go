@@ -44,7 +44,6 @@ func NewFetchAllHandler(
 		videoDownloader:      videoDownloader,
 	}
 
-	handler.maxSimultaneousDownloads = 1000
 	handler.currentSimultaneousDownloads = 0
 	handler.dtoOutputChannel = make(chan interface{})
 
@@ -73,6 +72,8 @@ func (h *fetchAllHandler) GetDtoOutputChannel() chan interface{} {
 }
 
 func (h *fetchAllHandler) handle(command *FetchAll) (interface{}, error) {
+	h.maxSimultaneousDownloads = command.GetMaxSimultaneousDownloads()
+
 	overviewURL := command.GetOverviewURL()
 	h.episodesPageIterator.SetCrawlingURL(overviewURL)
 
@@ -105,7 +106,7 @@ func (h *fetchAllHandler) handle(command *FetchAll) (interface{}, error) {
 				return nil, err
 			}
 
-			if h.currentSimultaneousDownloads > h.maxSimultaneousDownloads {
+			if h.currentSimultaneousDownloads > h.maxSimultaneousDownloads-1 {
 				h.wg.Wait()
 				h.currentSimultaneousDownloads = 0
 			}
@@ -114,6 +115,7 @@ func (h *fetchAllHandler) handle(command *FetchAll) (interface{}, error) {
 			go func() {
 				h.currentSimultaneousDownloads++
 				h.wg.Add(1)
+
 				defer h.wg.Done()
 
 				if err := h.downloadVideo(video, command.GetOutputDir()); err != nil {
