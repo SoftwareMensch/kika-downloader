@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/buger/goterm"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -11,8 +10,8 @@ import (
 	"rkl.io/kika-downloader/cli/config"
 	cliContract "rkl.io/kika-downloader/cli/contract"
 	"rkl.io/kika-downloader/cli/dto"
+	"rkl.io/kika-downloader/cli/view"
 	"time"
-	"sort"
 )
 
 func main() {
@@ -100,56 +99,26 @@ func runFetchAllCommand(flagSet *flag.FlagSet, args []string) error {
 
 	handler := service.(cliContract.CommandHandlerInterface)
 
+	terminalView := view.NewTerminal()
+
 	go func() {
-		goterm.Clear()
-		goterm.MoveCursor(1, 1)
-
-		pm := map[string] dto.EpisodeDownloadProgress{}
-
-		initTime := time.Now()
-
-		flushProgressMap := func() {
-			var keys []string
-			for k := range pm {
-				keys = append(keys, k)
-			}
-			sort.Strings(keys)
-
-			if time.Since(initTime) >= time.Second {
-				goterm.Clear()
-				goterm.MoveCursor(1, 1)
-
-				for _, k := range keys {
-					goterm.Println(
-						fmt.Sprintf("%s%% of \"%s - %s\" done",
-							pm[k].GetPercentage(),
-							pm[k].GetSeriesTitle(),
-							pm[k].GetEpisodeTitle(),
-						),
-					)
-				}
-
-				goterm.Flush()
-				initTime = time.Now()
-			}
-		}
+		startTime := time.Now()
 
 		for progressDtoInterface := range handler.GetDtoOutputChannel() {
 			switch progressDtoInterface.(type) {
 			case dto.EpisodeDownloadProgress:
 				progressDto := progressDtoInterface.(dto.EpisodeDownloadProgress)
 
-				key := progressDto.GetSeriesTitle() + progressDto.GetEpisodeTitle()
+				terminalView.UpdateEpisodeDownloadProgress(progressDto)
 
-				pm[key] = progressDto
-
-				flushProgressMap()
+				if time.Since(startTime) >= (time.Millisecond * 100) {
+					terminalView.Render()
+					startTime = time.Now()
+				}
 
 				break
 			}
 		}
-
-		flushProgressMap()
 	}()
 
 	if _, err := handler.Handle(command); err != nil {

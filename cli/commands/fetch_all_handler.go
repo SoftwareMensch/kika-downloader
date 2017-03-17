@@ -136,8 +136,6 @@ func (h *fetchAllHandler) downloadVideo(video coreContract.VideoInterface, outpu
 		return err
 	}
 
-	hasProgress := false
-
 	// progress handling
 	for p := range progressChannel {
 		if err := h.videoDownloader.GetLastError(); err != nil {
@@ -150,16 +148,7 @@ func (h *fetchAllHandler) downloadVideo(video coreContract.VideoInterface, outpu
 			video.GetEpisodeTitle(),
 		)
 
-		if !hasProgress {
-			hasProgress = true
-		}
-
 		h.dtoOutputChannel <- progressDto
-	}
-
-	// Just for notify that current one is done
-	if hasProgress {
-		h.dtoOutputChannel <- true
 	}
 
 	return nil
